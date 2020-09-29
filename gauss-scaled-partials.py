@@ -6,29 +6,12 @@ root = Tk()
 root.withdraw()
 number = root.clipboard_get()
 
-# Create regex for linear equations
 # Regex finds all coefficiants and properly sorts them
-x_regex = re.compile(r'''(
-    (-?)(\d*)[x]
-    )''', re.VERBOSE)
-
-y_regex = re.compile(r'''(
-    (-?)(\d*)[y]
-    )''', re.VERBOSE)
-
-z_regex = re.compile(r'''(
-    (-?)(\d*)[z]
-    )''', re.VERBOSE)
-
-d_regex = re.compile(r'''(
-    [=]\s*(\d)
-    )''', re.VERBOSE)
-
 equation_regex = re.compile(r'''(
     ((-?\d*)[x])?           # x and its coef (a)
-    \s*[+]?
+    \s*[+]?                 # space and/or plus
     (([-]?\d*)[y])?         # y and its coef (b)
-    \s*[+]?
+    \s*[+]?                 # space and/or plus
     (([-]?\d*)[z])?         # z and its coef (c)
     \s*[=]\s*               # equal sign
     (-?\d+)                 # value of d
@@ -70,8 +53,10 @@ for x in equations:
     for i in range(len(x)):
         if x[i] == '-':
             x[i] = int(-1)
-        if x[i] == '+':
+        elif x[i] == '+':
             x[i] = int(1)
+        else:
+            x[i] = int(x[i])
     
     print(x)
 
