@@ -9,24 +9,21 @@ number = root.clipboard_get()
 
 def main():
     equations = get_equations()
-    gauss_scaled_partial_pivot(equations)
-    X_list = solve_post_gauss(equations)
+    index_vector = gauss_scaled_partial_pivot(equations)
+    X_list = solve_post_gauss(equations, index_vector)
     print(f'The solutions to your system of equations are:')
     for i in range(len(X_list)):
-        print(f'X{i} = {X_list[i]}')
+        print(f'X{i} = {numpy.round(X_list[i], decimals=2)}')
     
     #wait = input()
 
 
-def solve_post_gauss(equations):
-    A = numpy.array([list[0:len(list)-1] for list in equations])
-    B = numpy.array([list[len(list)-1:len(list)] for list in equations])
-    print(A)
+def solve_post_gauss(equations, index_vector):
     X_values = [None for i in range(len(equations))]
-    for row in A:
-        X_values[numpy.argmax(row)] = numpy.max(row)
+    for i in range(len(equations)):
+        X_values[index_vector[i]] = equations[i][len(equations)]/equations[i][index_vector[i]]
         
-    return X_values
+    return numpy.array(X_values)
 
 def gauss_scaled_partial_pivot(equations):
     equ_len = len(equations)
@@ -35,27 +32,33 @@ def gauss_scaled_partial_pivot(equations):
     ratio_vector = [abs(equations[i][0])/scale_vector[i] for i in range(equ_len)]
     pivot_row = ratio_vector.index(max(ratio_vector))
 
-    print(f'Beginning vectors & first pivot row:')
+    print("Initial vectors:")
     print(f'Index Vector: {index_vector}')
     print(f'Scale Vector: {scale_vector}')
     print(f'Ratio Vector: {numpy.around(ratio_vector, decimals=2)}')
     print(f'Pivot Row: {pivot_row}\n')
-
-    #for i in range(equ_len):
-    #        if i == pivot_row:
-    #            break
+    for i in range(equ_len):
+            if i == pivot_row:
+                continue
             
             # Ratio between pivot row value and current row value, used to multiply entire lists at once
-    #        ratio = equations[i][0]/equations[pivot_row][0]
-    #        equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
+            if equations[pivot_row][0] == 0:
+                ratio = 0
+            else:
+                ratio = equations[i][0]/equations[pivot_row][0]
+            equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
 
-    #print(f'Matrix after step 1: \n{numpy.round(equations, decimals=2)}')
+    print(f'Matrix after step 1:\n{numpy.round(equations, decimals=2)}')
+    print(f'Index Vector: {index_vector}')
+    print(f'Ratio Vector: {numpy.around(ratio_vector, decimals=2)}')
+    print(f'Pivot Row: {pivot_row}\n')
+
+    swap_positions(index_vector, 0, pivot_row)
     
 
     column = 0
     while column <= equ_len-1:
         
-
         for i in range(equ_len):
             if i == pivot_row:
                 continue
@@ -65,7 +68,7 @@ def gauss_scaled_partial_pivot(equations):
                 ratio = 0
             else:
                 ratio = equations[i][column]/equations[pivot_row][column]
-            print(f'Ratio: {ratio}')
+            
             equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
         
         print(f'Matrix after step {column+1}: \n{numpy.round(equations, decimals=2)}')
@@ -80,14 +83,15 @@ def gauss_scaled_partial_pivot(equations):
         pivot_row = ratio_vector.index(max(ratio_vector))
         
         
-        
         print(f'Scale Vector: {scale_vector}')
         print(f'Ratio Vector: {numpy.round(ratio_vector, decimals=2)}')
         print(f'Pivot Row: {pivot_row}\n')
 
+        
+
         column += 1
     
-    return equations
+    return index_vector
 
 
 
