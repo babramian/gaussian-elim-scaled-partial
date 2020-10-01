@@ -8,7 +8,90 @@ root.withdraw()
 number = root.clipboard_get()
 
 def main():
+    equations = get_equations()
+    gauss_scaled_partial_pivot(equations)
+    X_list = solve_post_gauss(equations)
+    print(f'The solutions to your system of equations are:')
+    for i in range(len(X_list)):
+        print(f'X{i} = {X_list[i]}')
+    
+    #wait = input()
 
+
+def solve_post_gauss(equations):
+    A = numpy.array([list[0:len(list)-1] for list in equations])
+    B = numpy.array([list[len(list)-1:len(list)] for list in equations])
+    print(A)
+    X_values = [None for i in range(len(equations))]
+    for row in A:
+        X_values[numpy.argmax(row)] = numpy.max(row)
+        
+    return X_values
+
+def gauss_scaled_partial_pivot(equations):
+    equ_len = len(equations)
+    index_vector = [num for num in range(equ_len)]
+    scale_vector = [max(abs(list[0:len(list)-1])) for list in equations]
+    ratio_vector = [abs(equations[i][0])/scale_vector[i] for i in range(equ_len)]
+    pivot_row = ratio_vector.index(max(ratio_vector))
+
+    print(f'Beginning vectors & first pivot row:')
+    print(f'Index Vector: {index_vector}')
+    print(f'Scale Vector: {scale_vector}')
+    print(f'Ratio Vector: {numpy.around(ratio_vector, decimals=2)}')
+    print(f'Pivot Row: {pivot_row}\n')
+
+    #for i in range(equ_len):
+    #        if i == pivot_row:
+    #            break
+            
+            # Ratio between pivot row value and current row value, used to multiply entire lists at once
+    #        ratio = equations[i][0]/equations[pivot_row][0]
+    #        equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
+
+    #print(f'Matrix after step 1: \n{numpy.round(equations, decimals=2)}')
+    
+
+    column = 0
+    while column <= equ_len-1:
+        
+
+        for i in range(equ_len):
+            if i == pivot_row:
+                continue
+            
+            # Ratio between pivot row value and current row value, used to multiply entire lists at once
+            if equations[pivot_row][column] == 0:
+                ratio = 0
+            else:
+                ratio = equations[i][column]/equations[pivot_row][column]
+            print(f'Ratio: {ratio}')
+            equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
+        
+        print(f'Matrix after step {column+1}: \n{numpy.round(equations, decimals=2)}')
+        swap_positions(index_vector, column, pivot_row)
+        print(f'Index Vector: {index_vector}')
+        if column == equ_len-1:
+            break
+
+        scale_vector[pivot_row] = float("-inf")
+        ratio_vector = [abs(equations[i][column+1])/scale_vector[i] for i in range(equ_len)]
+        ratio_vector[pivot_row] = float("-inf")
+        pivot_row = ratio_vector.index(max(ratio_vector))
+        
+        
+        
+        print(f'Scale Vector: {scale_vector}')
+        print(f'Ratio Vector: {numpy.round(ratio_vector, decimals=2)}')
+        print(f'Pivot Row: {pivot_row}\n')
+
+        column += 1
+    
+    return equations
+
+
+
+def get_equations():
     print("Welcome to the automatic linear equations solver!")
     print("This version utiziles Gaussian Elimination with Scaled Partial Pivoting to solve linear equations!")
     print("Would you like to:")
@@ -16,80 +99,54 @@ def main():
     print("(B) Enter a file name (Must run this program from the same directory as your file)")
     choice = input()
 
-
-    equations = None
+    #equations = None
     if choice == 'a' or choice == 'A':
         num_equations = int(input('How many equations will you be providing? (n<=10)\n'))
         while num_equations > 10:
             num_equations = int(input('Please enter a number between 0 and 10: '))
         
-        equ_list_plain_txt = ''
+        equ_list = []
         for i in range(num_equations):
+            equ_list.append([])
             print('Equation #',i+1)
-            equ_list_plain_txt += input()
-            equ_list_plain_txt += '\t'
+            for j in range(num_equations+1):
+                print(f'Coefficient #{j+1}')
+                coef = input()
+                equ_list[i].append(coef)
+            print(f'What is your b val;ue for Equation {i+1}?')
+            equ_list[i].append(input())
+
         
-        equations = numpy.array(get_equations(equ_list_plain_txt))
+        return numpy.array(equ_list, dtype=float)
 
 
     if choice == 'b' or choice == 'B':
+        file_name = input("Please enter your files name (Must be in same directory as program): ")
+        equ_list = []
         with open('equations.txt', 'r') as file:
-            equations = numpy.array(get_equations(file.read()))
-
-    print(equations)
-    wait = input()
-
-
-def get_equations(text):
-
-    text = text.replace(" ", "")
-    print(text)
-    
-    # Regex finds all coefficiants and properly sorts them
-    equation_regex = re.compile(r'''(
-        ((-?\d*)[x])?           # x and its coef (a)
-        \s*[+]?\s*              # space and/or plus
-        (([-]?\s*\d*)[y])?         # y and its coef (b)
-        \s*[+]?\s*              # space and/or plus
-        (([-]?\s*\d*)[z])?         # z and its coef (c)
-        \s*[=]\s*               # equal sign
-        (-?\d+)                 # value of d
-        )''', re.VERBOSE)
-
-    equations = []
-    for groups in equation_regex.findall(text):
-
-        a = [groups[2], groups[4], groups[6], groups[7]] 
-
-        if groups[2] == '' and groups[1] != '':
-            a[0] = int(1)
-        elif groups[2] == '' and groups[1] == '':
-            a[0] = int(0)
+            for line in file:
+                #line = line.replace(" ","")
+                number_strings = line.split() # Split the line on runs of whitespace
+                numbers = [int(n) for n in number_strings] # Convert to integers
+                equ_list.append(numbers) # Add the "row" to your list.
         
-        if groups[4] == '' and groups[3] != '':
-            a[1] = int(1)
-        elif groups[4] == '' and groups[3] == '':
-            a[1] = int(0)
-        
-        if groups[6] == '' and groups[5] != '':
-            a[2] = int(1)
-        elif groups[6] == '' and groups[5] == '':
-            a[2] = int(0)
-        
-        equations.append(a)
+        equ_list = [x for x in equ_list if x!=[]]
+        print(equ_list)
 
-    #print(equations)
+        for i in range(len(equ_list)):
+            if len(equ_list)+1 != len(equ_list[i]):
+                print("Please enter a file with n*n coeficients and b values as well.")
+                exit()
+        return numpy.array(equ_list, dtype=float)
 
-    for x in equations:
-        for i in range(len(x)):
-            if x[i] == '-':
-                x[i] = int(-1)
-            elif x[i] == '+':
-                x[i] = int(1)
-            else:
-                x[i] = int(x[i])
-        
-    return equations
+
+# Swap function 
+def swap_positions(list, pos1, pos2): 
+    if pos1 == pos2:
+        return list
+
+    list[pos1], list[pos2] = list[pos2], list[pos1] 
+    return list
 
 
 if __name__ == "__main__":
