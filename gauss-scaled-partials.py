@@ -1,5 +1,4 @@
 import numpy
-import matplotlib
 import re
 import os
 
@@ -14,7 +13,7 @@ def main():
 
 
     # Prints x values line by line
-    print(f'The solutions to your system of equations are:')
+    print(f'\nThe solutions to your system of equations are:')
     for i in range(len(X_list)):
         print(f'X{i} = {numpy.round(X_list[i], decimals=2)}')
     
@@ -25,7 +24,7 @@ def main():
 def solve_post_gauss(equations, index_vector):
 
     X_values = [None for i in range(len(equations))]
-    for i in range(len(equations)):
+    for i in range(len(X_values)):
         # index_vector holds which 'row' the current iteration of x should calculate
         # This ensures our X values are accurate and not just placed randomly
         # Solves for x on each row
@@ -49,42 +48,26 @@ def gauss_scaled_partial_pivot(equations):
     print(f'Ratio Vector: {numpy.around(ratio_vector, decimals=2)}')
     print(f'Pivot Row: {pivot_row}\n')
 
-    # This loop goes through each row, and calculates the ratio need to multiply our pivot row
-    # by to then subtract that from our other rows
-    for i in range(equ_len):
-            # If this row is the pivot row, skip this step of the loop
-            if i == pivot_row:
-                continue
-            
-            # Ratio between pivot row value and current row value, used to multiply entire lists at once
-            if equations[pivot_row][0] == 0:
-                ratio = 0
-            else:
-                # Getting the ratio
-                ratio = equations[i][0]/equations[pivot_row][0]
-
-            # Subtracting from the proper row
-            equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
-
-    # Swaps indexes in the index vector
-    swap_positions(index_vector, 0, pivot_row)
         
     # While loop repeats above steps with some additional steps (will be the ones commented on)
     column = 0
     while column <= equ_len-1:
         
-        # Traverses through row indices, same for loop as above
-        # Does calculations for the ratio need, and for the rows we are subtracting from
+        # This loop goes through each row, and calculates the ratio need to multiply our pivot row
+        # by to then subtract that from our other rows
         for i in range(equ_len):
             
             if i == pivot_row:
                 continue
             
             if equations[pivot_row][column] == 0:
+                # This fixes the issue that arises from dividing by zero
                 ratio = 0
             else:
+                # Getting the ratio
                 ratio = equations[i][column]/equations[pivot_row][column]
             
+            # Subtracting from the proper row
             equations[i] = numpy.subtract(equations[i], equations[pivot_row] * ratio)
         
         # Prints intermediate matrix, labels it's steps as well
@@ -125,6 +108,10 @@ def get_equations():
     print("(B) Enter a file name (Must run this program from the same directory as your file)")
     choice = input()
 
+    while choice != 'A' and choice != 'a' and choice != 'b'and choice != 'B':
+        print(f'Please enter a valid option:')
+        choice = input()
+
     # A means manul input, B means file input
     # Goes through and asks user for number of equations (n) and creates n x n+1 matrix based
     # on what numbers user continues to input
@@ -153,7 +140,7 @@ def get_equations():
 
 
     # File input
-    if choice == 'b' or choice == 'B':
+    elif choice == 'b' or choice == 'B':
 
         # asks for file name
         file_name = input("Please enter your files name (Must be in same directory as program): ")
