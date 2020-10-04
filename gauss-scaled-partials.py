@@ -2,16 +2,20 @@ import numpy
 import re
 import os
 from math import sqrt
+from copy import copy
 
 # Main Function
 # Runs all methods in here to keep main clean
 def main():
     equations = get_equations() # Takes care of input, returns a numpy 2d array of coefficients & b
-
     A, b = split_matrix(equations)
+    x, stop_error = iterative_method_input(A, len(A))
+    print(f'X MAIN:\n{x}')
     print(f'A:\n{A}')
     print(f'b:\n{b}\n')
-    jacobi_sol = jacobi_iterative(A, b, len(A))
+    jacobi_sol = jacobi_iterative(A, b, len(A), stop_error, x)
+    gauss_seid = gauss_seidel(A, b, len(A), stop_error, x)
+    
     #index_vector = gauss_scaled_partial_pivot(equations) # Runs equations through gaussian elimination with scaled partial pivots as demonstrated in leture videos, return index vector
     #X_list = solve_post_gauss(equations, index_vector) # Takes equations and index vectors (post gaus) and solves for x
 
@@ -22,8 +26,7 @@ def main():
     wait = input()
 
 
-def jacobi_iterative(A, b, n, x=None):
-
+def iterative_method_input(A, n):
     if not isDMM(A, n):
         print(f'Please restart and enter a matrix that is diagonally dominant.')
         return
@@ -32,23 +35,79 @@ def jacobi_iterative(A, b, n, x=None):
     stop_error = float(input())
     print()
     print(f'Please enter your starting solution: ')
-    print()
     x = []
     for i in range(0, n):
         x.append(int(input()))
+    print()
+    return x, stop_error
+
+
+def gauss_seidel(A, b, n, stop_err, x=None):
+    stop_error = stop_err
+
+    # if no x is given, set it as full zeros
+    if x == None:
+        x = numpy.zeros(n)
+         
+    # for loop to calculate x, y, z 
+    for count in range(50):
+        x_prev = copy(x)
+        for i in range(0, n):         
+            # temp variable d to store b[i] (b of 'this' row)
+            d = b[i]                   
+            
+            # to calculate respective xi, yi, zi 
+            for j in range(0, n):      
+                if(i != j): 
+                    d -= A[i][j] * x[j] # b value - current iteration * current value of xi(k-1)
+            # updating the value of our solution 
+            x[i] = d/A[i][i] # Calculates new xi(k)
+            
+        if count == 1:
+            print(f'{count+1}st Approximation:\n{x}T')
+        elif count == 2:
+            print(f'{count+1}nd Approximation:\n{x}T')
+        elif count == 3:
+            print(f'{count+1}rd Approximation:\n{x}T')
+        else:
+            print(f'{count+1}th Approximation:\n{x}T')
+
+        #print(f'X PREV:\n{x_prev}')
+        #print(f'X:\n{x}')
+
+        # Calculates error based on L2 and compares
+        error = calculate_L2(numpy.subtract(x, x_prev))/calculate_L2(x)
+        print(f'Error:\n{error}')
+        if error < stop_error:
+            break    # Breaks out of loop if we chave reached the desired error
+        
+        if count == 49:
+            print("The error was not reached.\n")
+
+    print(f'\nSolution via Gauss-Seidel Method:')
+    print_array(x)
+    print(f'With a final error of {error}')
+    return x
+
+
+
+def jacobi_iterative(A, b, n, stop_err, x=None):
+    stop_error = stop_err
+    if x == None:
+        x = numpy.zeros(n)
 
     # Vector of the diagonals in A (I know it's just A[n][n], numpy just makes it cleaner)
     D = numpy.diag(A)
     #print(f'D:\n{D}')
     #print(f'Flat D:\n{numpy.diagflat(D)}')
+
     R = numpy.subtract(A, numpy.diagflat(D)) # Subtract them from A
     #print(f'R:\n{R}')
 
-    
     for i in range(50):
-        x_prev = x
-        #print(f'X:\n{x}')
+        x_prev = copy(x)
         x = (b - numpy.dot(R,x))/D
+
         if i == 1:
             print(f'{i+1}st Approximation:\n{x}T')
         elif i == 2:
@@ -66,7 +125,7 @@ def jacobi_iterative(A, b, n, x=None):
         if i == 49:
             print("The error was not reached.\n")
 
-    print(f'Solution by Jacobi Method:\n')
+    print(f'\nSolution via Jacobi Method:')
     print_array(x)
     print(f'With a final error of {error}')
     return x
@@ -141,7 +200,6 @@ def get_equations():
 
         # Returns al numpy array with dtype float
         return numpy.array(equ_list, dtype=float)
-
 
     # File input
     elif choice == 'b' or choice == 'B':
