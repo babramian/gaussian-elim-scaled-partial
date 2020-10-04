@@ -8,33 +8,41 @@ from copy import copy
 # Runs all methods in here to keep main clean
 def main():
     equations = get_equations() # Takes care of input, returns a numpy 2d array of coefficients & b
-    A, b = split_matrix(equations)
-    x, stop_error = iterative_method_input(A, len(A))
-    print(f'X MAIN:\n{x}')
+    A, b = split_matrix(equations) # Splits matrix into A and b
+    x, stop_error = iterative_method_input(A, len(A)) # Gets inputs for stop error and initial solutions
+    
+    # Printing original matrices for user to see
     print(f'A:\n{A}')
     print(f'b:\n{b}\n')
+
+    # These methods return the solution x column vector for their corresponding methods
     jacobi_sol = jacobi_iterative(A, b, len(A), stop_error, x)
     gauss_seid = gauss_seidel(A, b, len(A), stop_error, x)
     
     #index_vector = gauss_scaled_partial_pivot(equations) # Runs equations through gaussian elimination with scaled partial pivots as demonstrated in leture videos, return index vector
     #X_list = solve_post_gauss(equations, index_vector) # Takes equations and index vectors (post gaus) and solves for x
 
-
     # Prints x values line by line
     #print_array(X_list)
     
     wait = input()
 
-
+# Inputs: A matrix, n (length of A)
+# Returns: Stopping error and intitial solution vector
 def iterative_method_input(A, n):
+
+    # Checks if matrix is Diagonally Dominant
     if not isDMM(A, n):
         print(f'Please restart and enter a matrix that is diagonally dominant.')
         return
 
+    # Asks user for stop error, then starting solution
     print(f'Please enter your desired stopping error: ')
     stop_error = float(input())
     print()
     print(f'Please enter your starting solution: ')
+
+    # Instantiates x and appends user input as start solutions
     x = []
     for i in range(0, n):
         x.append(int(input()))
@@ -42,6 +50,9 @@ def iterative_method_input(A, n):
     return x, stop_error
 
 
+# Inputs: A matrix, b matrix, n (length of A), stopping error, x vector
+# Returns: Final Solution vector
+# This method computes the Final x column vector using the gauss seidel method
 def gauss_seidel(A, b, n, stop_err, x=None):
     stop_error = stop_err
 
@@ -63,11 +74,11 @@ def gauss_seidel(A, b, n, stop_err, x=None):
             # updating the value of our solution 
             x[i] = d/A[i][i] # Calculates new xi(k)
             
-        if count == 1:
+        if count == 0:
             print(f'{count+1}st Approximation:\n{x}T')
-        elif count == 2:
+        elif count == 1:
             print(f'{count+1}nd Approximation:\n{x}T')
-        elif count == 3:
+        elif count == 1:
             print(f'{count+1}rd Approximation:\n{x}T')
         else:
             print(f'{count+1}th Approximation:\n{x}T')
@@ -77,20 +88,25 @@ def gauss_seidel(A, b, n, stop_err, x=None):
 
         # Calculates error based on L2 and compares
         error = calculate_L2(numpy.subtract(x, x_prev))/calculate_L2(x)
-        print(f'Error:\n{error}')
+        #print(f'Error:\n{error}')
         if error < stop_error:
-            break    # Breaks out of loop if we chave reached the desired error
+            print(f'\nSolution via Gauss-Seidel Method:')
+            print_array(x)
+            print(f'With a final error of {error}\n')
+            return x    # Breaks out of loop if we chave reached the desired error
         
         if count == 49:
             print("The error was not reached.\n")
 
     print(f'\nSolution via Gauss-Seidel Method:')
     print_array(x)
-    print(f'With a final error of {error}')
+    print(f'With a final error of {error}\n')
     return x
 
 
-
+# Inputs: A matrix, b matrix, n (length of A), stopping error, x vector
+# Returns: Final Solution vector
+# This method computes the Final x column vector using the Jacobi Iterative method
 def jacobi_iterative(A, b, n, stop_err, x=None):
     stop_error = stop_err
     if x == None:
@@ -98,46 +114,56 @@ def jacobi_iterative(A, b, n, stop_err, x=None):
 
     # Vector of the diagonals in A (I know it's just A[n][n], numpy just makes it cleaner)
     D = numpy.diag(A)
-    #print(f'D:\n{D}')
-    #print(f'Flat D:\n{numpy.diagflat(D)}')
 
     R = numpy.subtract(A, numpy.diagflat(D)) # Subtract them from A
     #print(f'R:\n{R}')
 
     for i in range(50):
+        # Storing previous x to calculate error later
         x_prev = copy(x)
+
+        # Calculates xi(k) vector
+        # b vector minus R*x (return 1xn vector) divided by diagonal vector
+        # This line puts a vector of length n into x
         x = (b - numpy.dot(R,x))/D
 
-        if i == 1:
+        # Takes care oif '1st' '2nd' '3rd' issue
+        if i == 0:
             print(f'{i+1}st Approximation:\n{x}T')
-        elif i == 2:
+        elif i == 1:
             print(f'{i+1}nd Approximation:\n{x}T')
-        elif i == 3:
+        elif i == 2:
             print(f'{i+1}rd Approximation:\n{x}T')
         else:
             print(f'{i+1}th Approximation:\n{x}T')
 
+        # Calculates current iterations error and checks to see if we should stop the method
         error = calculate_L2(numpy.subtract(x, x_prev))/calculate_L2(x)
-        #print(f'Current Error:\n{error}')
         if error < stop_error:
-            break
+            print(f'\nSolution via Jacobi Method:')
+            print_array(x)
+            print(f'With a final error of {error}\n')
+            return x
 
+        # Too many iterations (if not printed, 50th time had a small enough error)
         if i == 49:
             print("The error was not reached.\n")
 
     print(f'\nSolution via Jacobi Method:')
     print_array(x)
-    print(f'With a final error of {error}')
+    print(f'With a final error of {error}\n')
     return x
 
-
+# Input: 1d array
+# Returns: L2 = sqrt(x1^2 + x2^2 + ... + xn^2)
 def calculate_L2(arr):
     L2 = float(0)
     for num in arr:
         L2 += num*num
     return sqrt(abs(L2))
 
-
+# Input: Matrix m, n (length of m)
+# Returns: m is Diagonally Dominant (True), or not (False)
 def isDMM(m, n) : 
   
     # for each row 
@@ -165,7 +191,7 @@ def isDMM(m, n) :
 def get_equations():
     # Input menu
     print("Welcome to the automatic linear equations solver!")
-    print("This version utiziles Gaussian Elimination with Scaled Partial Pivoting to solve linear equations!")
+    #print("This version utiziles Gaussian Elimination with Scaled Partial Pivoting to solve linear equations!")
     print("Would you like to:")
     print("(A) Enter in your equations manually or")
     print("(B) Enter a file name (Must run this program from the same directory as your file)")
@@ -241,10 +267,6 @@ def swap_positions(list, pos1, pos2):
     return list
 
 
-
-
-
-
 # Parameters: 2d numpy array of equations, list of index vectors
 # This function solves for Xn, and places the X's in the proper position in their list
 def solve_post_gauss(equations, index_vector):
@@ -257,7 +279,6 @@ def solve_post_gauss(equations, index_vector):
         X_values[i] = equations[index_vector[i]][len(equations)]/equations[index_vector[i]][i]
         
     return numpy.array(X_values)
-
 
 
 def gauss_scaled_partial_pivot(equations):
@@ -326,16 +347,22 @@ def gauss_scaled_partial_pivot(equations):
     return index_vector
 
 
+# Input: matrix m
+# Returns: A matrix and b matrix
 def split_matrix(m):
     A = []
     b = []
     for i in range(len(m)):
+        # Create empty row vector
         row = []
         for j in range(len(m)+1):
             if j == len(m):
+                # If last value in a row, append to b
                 b.append(m[i][j])
             else:
+                # Fill row vector with all coefficients
                 row.append(m[i][j])
+        # Append our now fileld row vector into A
         A.append(row)
     
     return numpy.array(A), numpy.array(b)
